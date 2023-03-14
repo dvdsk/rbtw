@@ -1,8 +1,8 @@
 #![feature(unix_chown)]
 
-use std::{env, fs};
+
 use std::os::unix::fs::chown;
-use std::path::PathBuf;
+
 use std::process::Command;
 
 mod efi;

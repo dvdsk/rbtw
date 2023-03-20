@@ -3,6 +3,9 @@
 use std::env;
 use std::os::unix::fs::chown;
 use std::process::Command;
+use std::io::Write;
+use std::thread::sleep;
+use std::time::Duration;
 
 mod efi;
 mod setuid;
@@ -32,13 +35,20 @@ fn main() {
     setuid::set();
 
     if !was_set {
-        println!("next time you can run without sudo!");
+        let path = std::env::args().next().unwrap();
         println!(
-            "(setuid bit and permissions set, {} is now owned by root)",
-            std::env::args().next().unwrap()
+            "- setuid bit and permissions set and \n    {path}\n\
+             now owned by root\n\
+            - next time you can run without sudo!\n\
+            - next time reboot will happen instandly"
         );
+        for i in (1..=10).rev() {
+            print!("\rrebooting in {i}s ");
+            std::io::stdout().flush().unwrap();
+            sleep(Duration::from_secs(1));
+        }
     }
 
     efi::set_next_boot();
-    Command::new("reboot").arg("now").status().unwrap();
+    // Command::new("reboot").arg("now").status().unwrap();
 }

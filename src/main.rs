@@ -50,5 +50,5 @@ fn main() {
     }
 
     efi::set_next_boot();
-    // Command::new("reboot").arg("now").status().unwrap();
+    Command::new("reboot").arg("now").status().unwrap();
 }

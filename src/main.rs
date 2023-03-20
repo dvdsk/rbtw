@@ -5,12 +5,11 @@ use std::os::unix::fs::chown;
 use std::process::Command;
 
 mod efi;
-mod gid;
+mod setuid;
 
 const ROOT: u32 = 0;
-const HELP: &'static str =
-    "Usage: call without any arguments to restart to windows. \n\n\
-        - Requires sudo on its first run. \n\
+const HELP: &str = "Usage: call without any arguments to restart to windows. \n\n\
+        - Requires sudo on its first run, will rerun with sudo when not provided. \n\
         - The next boot after this will be to the default OS again.\n\
         - Will stop if no windows bootloader is found.\n\n\
         Options:\n    --help, -h    Print this help message\n";
@@ -23,18 +22,19 @@ fn main() {
         }
     }
 
-    sudo::escalate_if_needed().expect("sudo failed");
+    sudo::escalate_if_needed()
+        .expect("sudo failed, you may also call rbtw with sudo in front of it");
 
-    let was_set = gid::is_set();
+    let was_set = setuid::is_set();
 
     let path = std::env::current_exe().unwrap();
     chown(path, Some(ROOT), Some(ROOT)).unwrap();
-    gid::set();
+    setuid::set();
 
     if !was_set {
         println!("next time you can run without sudo!");
         println!(
-            "(git bit set and {} is now owned by root)",
+            "(setuid bit and permissions set, {} is now owned by root)",
             std::env::args().next().unwrap()
         );
     }

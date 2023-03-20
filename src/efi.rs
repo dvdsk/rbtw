@@ -4,14 +4,14 @@ fn windows_num(adapter: &mut Adapter) -> u16 {
     let mut windows_entries = adapter
         .load_options()
         .map(Result::unwrap)
-        .filter(|o| o.description.contains("Windows"))
+        .filter(|o| o.description.to_lowercase().contains("windows"))
         .map(|o| o.number);
 
     let num = windows_entries.next().unwrap();
 
     assert!(
         windows_entries.next().is_none(),
-        "multiple windows installs/boot loaders do not know which to boot too"
+        "multiple windows installs/boot loaders, do not know which to boot to, exiting"
     );
     num
 }

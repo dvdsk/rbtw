@@ -1,10 +1,22 @@
 [package]
 name = "rbtw"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+description = "Reboot from linux to windows while linux stays the default OS"
+repository = "https://github.com/dvdsk/rbtw"
+license = "GPLv3"
+authors = ["David Kleingeld"]
+readme = "Readme.md"
+keywords = ["reboot", "windows", "next boot", "boot order"]
+categories = ["command-line-utilities"]
+exclude = [
+	".github/",
+	".gitignore",
+
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-efibootnext = "0.3.1"
-sudo = "0.6.0"
+efibootnext = "0.3"
+sudo = "0.6"

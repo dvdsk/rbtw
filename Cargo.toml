@@ -9,10 +9,7 @@ authors = ["David Kleingeld"]
 readme = "Readme.md"
 keywords = ["reboot", "windows", "next-boot", "boot-order"]
 categories = ["command-line-utilities"]
-exclude = [
-	".github/*",
-	".gitignore",
-]
+exclude = [".github/*", ".gitignore"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

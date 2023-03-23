@@ -8,7 +8,7 @@ fn main() {
         panic!("\n*****************************\n \
                Need nightly to compile. \
                When installing from crates.io try using:\
-               \n\t`cargo install +nightly rbtw`\
+               \n\t`cargo +nightly install rbtw`\
                \n******************************");
     }
 }

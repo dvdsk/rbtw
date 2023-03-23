@@ -41,7 +41,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with: 
         name: rbtw
-        path: target/release/book-safe
+        path: target/release/rbtw
 
     - name: get package version and tag.
       id: version_tag

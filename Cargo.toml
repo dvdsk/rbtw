@@ -1,6 +1,6 @@
 [package]
 name = "rbtw"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 description = "Reboot from linux to windows while linux stays the default OS"
 repository = "https://github.com/dvdsk/rbtw"

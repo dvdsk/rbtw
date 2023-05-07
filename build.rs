@@ -7,8 +7,10 @@ fn main() {
     } else {
         panic!("\n*****************************\n \
                Need nightly to compile. \
-               When installing from crates.io try using:\
+               \nWhen installing from crates.io try using:\
                \n\t`cargo +nightly install rbtw`\
+               \nYou might need to also setup the nightly toolchain:\
+               \n\t`rustup install nightly`\
                \n******************************");
     }
 }

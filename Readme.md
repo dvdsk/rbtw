@@ -4,8 +4,9 @@ The program will crash/halts if there is no windows bootloader or if there are m
 
 ### Installing
 You can either download the binary, it should work on any Linux system. Or install from source on *crates.io*, recommended if you have `cargo` installed
-- Using `cargo` and *crates.io* use: `cargo +nightly install rbtw`
-- Download the latest binary from https://github.com/dvdsk/rbtw/releases make it executable (`chmod +x rbtw`) and place it somewhere in your path. For example `.local/bin` or for a system-wide install `/usr/bin/rbtw`.
+
+- [recommended] Download the latest binary from https://github.com/dvdsk/rbtw/releases make it executable (`chmod +x rbtw`) and place it somewhere in your path. For example `.local/bin` or for a system-wide install `/usr/bin/rbtw`.
+- Using `cargo` and *crates.io* use: `cargo +nightly install rbtw`. You might have to set up rust nightly toolchain with: `rustup install nightly`.
 
 ### Alternative
 you can use the shell script:

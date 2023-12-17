@@ -14,7 +14,7 @@ exclude = [".github/*", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-efibootnext = "0.3"
+efibootnext = "0.5"
 sudo = "0.6"
 
 [build-dependencies]

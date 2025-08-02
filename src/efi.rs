@@ -1,23 +1,23 @@
 use efibootnext::Adapter;
 
-fn windows_num(adapter: &mut Adapter) -> u16 {
-    let mut windows_entries = adapter
+use crate::showln;
+
+pub fn boot_num(adapter: &mut Adapter, boot_target: &str) -> Option<u16> {
+    let mut efi_entries = adapter
         .load_options()
+        .unwrap()
         .map(Result::unwrap)
-        .filter(|o| o.description.to_lowercase().contains("windows"))
+        .filter(|o| {
+            o.description
+                .to_lowercase()
+                .contains(&boot_target.to_lowercase())
+        })
         .map(|o| o.number);
 
-    let num = windows_entries.next().unwrap();
+    let num = efi_entries.next()?;
 
-    assert!(
-        windows_entries.next().is_none(),
-        "multiple windows installs/boot loaders, do not know which to boot to, exiting"
-    );
-    num
-}
-
-pub fn set_next_boot() {
-    let mut adapter = Adapter::default();
-    let windows = windows_num(&mut adapter);
-    adapter.set_boot_next(windows).unwrap();
+    if efi_entries.next().is_some() {
+        showln!("multiple {boot_target} efi boot loaders, starting first, exiting");
+    }
+    Some(num)
 }

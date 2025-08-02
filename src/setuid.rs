@@ -7,11 +7,7 @@ const OTHERS_EXECUTE: u32 = 0o0001;
 const OWNER_FREE: u32 = 0o0700;
 const GROUP_NO_PERM: u32 = 0o0000;
 
-const PERM: u32 = SETUID_BIT 
-    | OTHERS_READ 
-    | OTHERS_EXECUTE 
-    | OWNER_FREE 
-    | GROUP_NO_PERM;
+const SAFE_SETUID: u32 = SETUID_BIT | OTHERS_READ | OTHERS_EXECUTE | OWNER_FREE | GROUP_NO_PERM;
 
 pub fn is_set() -> bool {
     let path = std::env::current_exe().unwrap();
@@ -22,6 +18,14 @@ pub fn is_set() -> bool {
 pub fn set() {
     let path = std::env::current_exe().unwrap();
     let mut permissions = path.metadata().unwrap().permissions();
-    permissions.set_mode(PERM);
+    permissions.set_mode(SAFE_SETUID);
+    std::fs::set_permissions(&path, permissions).unwrap();
+}
+
+pub fn unset() {
+    let path = std::env::current_exe().unwrap();
+    let mut permissions = path.metadata().unwrap().permissions();
+    let without_setuid = permissions.mode() & !SETUID_BIT;
+    permissions.set_mode(without_setuid);
     std::fs::set_permissions(&path, permissions).unwrap();
 }

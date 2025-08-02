@@ -1,6 +1,7 @@
 [package]
 name = "rbtw"
 version = "1.0.2"
+rust-version = "1.88"
 edition = "2021"
 description = "Reboot from linux to windows while linux stays the default OS"
 repository = "https://github.com/dvdsk/rbtw"
@@ -14,8 +15,14 @@ exclude = [".github/*", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.5.42", features = ["derive"] }
+color-eyre = "0.6.5"
 efibootnext = "0.5"
+efivar = "2.0.0"
+itertools = "0.14.0"
+nix = { version = "0.30.1", features = ["ioctl"] }
 sudo = "0.6"
+uuid = "1.17.0"
 
 [build-dependencies]
 rustc_version = "0.4"

@@ -1,9 +1,9 @@
 [package]
 name = "rbtw"
-version = "2.0.0"
+version = "2.0.1"
 rust-version = "1.88"
 edition = "2021"
-description = "Reboot from linux to windows while linux stays the default OS"
+description = "Reboot to a specific OS in a single press"
 repository = "https://github.com/dvdsk/rbtw"
 license = "GPL-3.0-only"
 authors = ["David Kleingeld"]

@@ -5,8 +5,8 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use clap::Parser;
-use color_eyre::eyre::Context;
-use color_eyre::Section;
+use color_eyre::eyre::{eyre, Context};
+use color_eyre::{Result, Section};
 
 mod bootctl;
 mod efi;
@@ -41,6 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let store = store::Store::open()?;
 
     let boot_target = if let Some(boot_target) = args.set_target {
+        check_if_target_exists(&boot_target)?;
         setuid::unset();
         store.set_data(&boot_target)?;
         println!("Boot target configured! Run again to reboot to it");
@@ -96,21 +97,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn configure_next_boot(boot_target: &str) -> color_eyre::Result<()> {
+fn check_if_target_exists(boot_target: &str) -> Result<()> {
     let mut adapter = efibootnext::Adapter::default();
-    if let Some(num) = efi::boot_num(&mut adapter, boot_target) {
+    if efi::boot_num(&mut adapter, boot_target)?.is_some()
+        || bootctl::matching_entry(boot_target)?.is_some()
+    {
+        Ok(())
+    } else {
+        no_matching_entry_error(&mut adapter, boot_target)
+    }
+}
+
+fn no_matching_entry_error(adapter: &mut Adapter, boot_target: &str) -> Result<()> {
+    let list = efi::list(adapter)?
+        .iter()
+        .map(ToString::to_string)
+        .chain(bootctl::list()?.iter().map(ToString::to_string))
+        .join("\n  - ");
+    Err(eyre!("No boot entry that matches"))
+        .with_note(|| format!("target pattern: {boot_target}"))
+        .with_note(|| format!("available boot targets:\n  - {list}"))
+}
+
+fn configure_next_boot(boot_target: &str) -> Result<()> {
+    let mut adapter = efibootnext::Adapter::default();
+    if let Some(num) = efi::boot_num(&mut adapter, boot_target)? {
         adapter
             .set_boot_next(num)
             .wrap_err("Failed to configure UEFI bootnext")?;
         Ok(())
-    } else if let Ok(entry) = bootctl::matching_entry(boot_target) {
+    } else if let Some(entry) = bootctl::matching_entry(boot_target)? {
         bootctl::set_loader_entry_oneshot(entry)
             .wrap_err("Could not configure systemd-boot oneshot")?;
         Ok(())
     } else {
-        Err(color_eyre::eyre::eyre!(
-            "Could not find matching UEFI or systemd-boot entry"
-        ))
+        no_matching_entry_error(&mut adapter, boot_target)
     }
 }
 
@@ -122,4 +143,6 @@ macro_rules! showln {
         ::std::thread::sleep(::std::time::Duration::from_secs(5));
     }};
 }
+use efibootnext::Adapter;
+use itertools::Itertools;
 pub(crate) use showln;

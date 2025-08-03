@@ -1,6 +1,6 @@
-/// A rather 'creative' way to store the target OS parameter. Instead of a config file
-/// we append the setting to the executable. Otherwise having multiple
-/// commands would require aliasses and root owned read only config files.
+//! A rather 'creative' way to store the target OS parameter. Instead of a config file
+//! we append the setting to the executable. Otherwise having multiple
+//! commands would require aliasses and root owned read only config files.
 
 use std::ffi::OsString;
 use std::fs::{self, File};
@@ -61,13 +61,13 @@ impl Store {
                 .write_all(&self.binary_bytes)
                 .wrap_err("Could not copy binary")?;
             copy_file
-                .write_all(&STORE_START)
+                .write_all(STORE_START)
                 .wrap_err("Could not append data")?;
             copy_file
                 .write_all(target.as_bytes())
                 .wrap_err("Could not append data")?;
             copy_file
-                .write_all(&STORE_END)
+                .write_all(STORE_END)
                 .wrap_err("Could not append data")?;
             copy_file
                 .set_permissions(original_permissions)
@@ -94,11 +94,11 @@ fn data_range(file_content: &[u8]) -> Option<DataRange> {
         return None;
     }
 
-    let split = file_content
+    let mut split = file_content
         .windows(STORE_START.len())
         .positions(|w| w == STORE_START);
 
-    let start = split.last().unwrap();
+    let start = split.next_back().unwrap();
     let data_end = file_content.len() - STORE_END.len();
     Some(DataRange {
         header_start: start,

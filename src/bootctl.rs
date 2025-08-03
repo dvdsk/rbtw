@@ -1,8 +1,8 @@
+use std::fmt::Display;
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
 
-use color_eyre::eyre::{eyre, Context, OptionExt, Result};
-use color_eyre::Section;
+use color_eyre::eyre::{eyre, Context, Result};
 use efivar::efi::{Variable, VariableFlags, VariableVendor};
 use itertools::Itertools;
 use uuid::Uuid;
@@ -25,11 +25,13 @@ pub struct BootEntry {
     id: String,
 }
 
-impl BootEntry {
-    fn title(&self) -> &str {
-        &self.title
+impl Display for BootEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.title)
     }
+}
 
+impl BootEntry {
     fn from_file(path: &Path) -> Option<Result<Self>> {
         let Some(id) = path.file_name()?.to_str() else {
             return Some(Err(eyre!(
@@ -65,31 +67,28 @@ impl BootEntry {
     }
 }
 
-pub fn matching_entry(boot_target: &str) -> Result<BootEntry> {
-    let entries: Vec<_> = read_dir("/boot/efi/loader/entries")
+pub fn list() -> Result<Vec<BootEntry>> {
+    read_dir("/boot/efi/loader/entries")
         .wrap_err("Could not read dir: /boot/efi/loader/entries")?
         .filter_map_ok(|e| BootEntry::from_file(&e.path()))
         .flatten()
         .collect::<Result<_, _>>()
-        .wrap_err("Could not read entry in /boot/efi/loader/entries")?;
+        .wrap_err("Could not read entry in /boot/efi/loader/entries")
+}
+
+pub fn matching_entry(boot_target: &str) -> Result<Option<BootEntry>> {
+    let entries = list()?;
     let mut matches = entries
         .iter()
         .filter(|e| e.title.to_lowercase().contains(&boot_target.to_lowercase()));
-    let choice = matches
-        .next()
-        .ok_or_eyre("No boot entry titles contain the provided name")
-        .with_note(|| format!("Provided name: {boot_target}"))
-        .with_note(|| {
-            format!(
-                "Boot entries found:\n      - {}",
-                entries.iter().map(BootEntry::title).join("\n      - ")
-            )
-        })?;
+    let Some(choice) = matches.next() else {
+        return Ok(None);
+    };
     if matches.next().is_some() {
         showln!("multiple matching options");
     }
 
-    Ok(choice.clone())
+    Ok(Some(choice.clone()))
 }
 
 // check if this worked with:

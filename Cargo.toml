@@ -19,8 +19,11 @@ clap = { version = "4.5.42", features = ["derive"] }
 color-eyre = "0.6.5"
 efibootnext = "0.5"
 efivar = "2.0.0"
+inquire = "0.7.5"
 itertools = "0.14.0"
 nix = { version = "0.30.1", features = ["ioctl"] }
+ron = "0.10.1"
+serde = { version = "1.0.219", features = ["derive"] }
 sudo = "0.6"
 uuid = "1.17.0"
 

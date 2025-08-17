@@ -43,7 +43,7 @@ impl Store {
         })
     }
 
-    pub fn set_data(self, target: &str) -> Result<()> {
+    pub fn set_data(self, target: &[u8]) -> Result<()> {
         let original = std::env::current_exe().wrap_err("Could not get location of executable")?;
         let original_permissions = std::fs::metadata(&original)
             .wrap_err("Could not get permissions for current executable")?
@@ -64,7 +64,7 @@ impl Store {
                 .write_all(STORE_START)
                 .wrap_err("Could not append data")?;
             copy_file
-                .write_all(target.as_bytes())
+                .write_all(target)
                 .wrap_err("Could not append data")?;
             copy_file
                 .write_all(STORE_END)

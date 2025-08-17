@@ -5,9 +5,12 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use clap::Parser;
-use color_eyre::eyre::{eyre, Context};
+use color_eyre::eyre::Context;
 use color_eyre::{Result, Section};
 
+use crate::boot_target::BootTarget;
+
+mod boot_target;
 mod bootctl;
 mod efi;
 mod setuid;
@@ -40,21 +43,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let store = store::Store::open()?;
 
-    let boot_target = if let Some(boot_target) = args.set_target {
-        check_if_target_exists(&boot_target)?;
+    if let Some(boot_target) = args.set_target {
+        sudo::escalate_if_needed()
+            .expect("sudo failed, you may also call rbtw with sudo in front of it");
+
+        let boot_target = BootTarget::resolve(boot_target.clone())?;
+        // SECURITY: do not allow booting to another OS then what was configured
+        // before authenticating as super user.
         setuid::unset();
-        store.set_data(&boot_target)?;
+        store.set_data(&boot_target.to_bytes())?;
         println!("Boot target configured! Run again to reboot to it");
         return Ok(());
-    } else if store.data_bytes.is_empty() {
+    }
+
+    if store.data_bytes.is_empty() {
         println!("No boot target configured, please set one with: --set-target");
         return Ok(());
-    } else {
-        String::from_utf8(store.data_bytes).expect("we only store utf8 strings")
-    };
+    }
+
+    let target = BootTarget::from_bytes(&store.data_bytes)?;
 
     if args.current_target {
-        println!("Boot target: {boot_target}");
+        println!("Boot target: {target:?}");
         return Ok(());
     }
 
@@ -84,9 +94,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    configure_next_boot(&boot_target)
+    target
+        .configure_next_boot()
         .wrap_err("Failed to configure next boot")
-        .with_note(|| format!("tried to find OS matching: {boot_target}"))?;
+        .with_note(|| format!("tried to find OS matching: {target:?}"))?;
 
     if !args.no_reboot {
         Command::new("reboot")
@@ -97,44 +108,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn check_if_target_exists(boot_target: &str) -> Result<()> {
-    let mut adapter = efibootnext::Adapter::default();
-    if efi::boot_num(&mut adapter, boot_target)?.is_some()
-        || bootctl::matching_entry(boot_target)?.is_some()
-    {
-        Ok(())
-    } else {
-        no_matching_entry_error(&mut adapter, boot_target)
-    }
-}
-
-fn no_matching_entry_error(adapter: &mut Adapter, boot_target: &str) -> Result<()> {
-    let list = efi::list(adapter)?
-        .iter()
-        .map(ToString::to_string)
-        .chain(bootctl::list()?.iter().map(ToString::to_string))
-        .join("\n  - ");
-    Err(eyre!("No boot entry that matches"))
-        .with_note(|| format!("target pattern: {boot_target}"))
-        .with_note(|| format!("available boot targets:\n  - {list}"))
-}
-
-fn configure_next_boot(boot_target: &str) -> Result<()> {
-    let mut adapter = efibootnext::Adapter::default();
-    if let Some(num) = efi::boot_num(&mut adapter, boot_target)? {
-        adapter
-            .set_boot_next(num)
-            .wrap_err("Failed to configure UEFI bootnext")?;
-        Ok(())
-    } else if let Some(entry) = bootctl::matching_entry(boot_target)? {
-        bootctl::set_loader_entry_oneshot(entry)
-            .wrap_err("Could not configure systemd-boot oneshot")?;
-        Ok(())
-    } else {
-        no_matching_entry_error(&mut adapter, boot_target)
-    }
-}
-
 /// A println that first sleeps for 5 seconds so the message can be seen
 macro_rules! showln {
     ($($arg:tt)*) => {{
@@ -143,6 +116,4 @@ macro_rules! showln {
         ::std::thread::sleep(::std::time::Duration::from_secs(5));
     }};
 }
-use efibootnext::Adapter;
-use itertools::Itertools;
 pub(crate) use showln;

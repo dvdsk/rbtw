@@ -74,3 +74,27 @@ pub fn remove(path: &Path) -> Result<()> {
         .wrap_err("Could not write attributes")
         .with_note(|| format!("path: {}", path.display()))
 }
+
+pub fn add(path: &Path) -> Result<()> {
+    // from man ioctl_iflags(2)
+    //
+    // The file is immutable: no changes are permitted to the file
+    // contents or metadata (permissions,  timestamps,  ownership,
+    // link count and so on).  (This restriction applies even to the
+    // superuser.)  Only a privileged process (CAP_LINUX_IMMUTABLE)
+    // can set or clear this attribute.
+
+    // Again from include/uapi/linux/fs.h we get:
+    // ```c
+    // #define FS_IMMUTABLE_FL         0x00000010 /* Immutable file */
+    // ```
+    pub const FS_IMMUTABLE_FL: isize = 0x00000010; // Immutable file
+
+    let attr = get_flags(path)
+        .wrap_err("Could not read attributes")
+        .with_note(|| format!("path: {}", path.display()))?;
+    let attr = attr | FS_IMMUTABLE_FL;
+    set_flags(path, attr)
+        .wrap_err("Could not write attributes")
+        .with_note(|| format!("path: {}", path.display()))
+}
